@@ -252,9 +252,9 @@ namespace Toggl.Joey.UI.Views
                     indexSelected = -1;
                     return true;
                 }
-
             }
 
+            // check if drag is starting
             if (e.Action == MotionEventActions.Move) {
                 return false;
             }
@@ -265,11 +265,9 @@ namespace Toggl.Joey.UI.Views
                 } else {
                     StartSlideBackAnimation ();
                 }
-
                 OnSliceSelected ();
-                return false;
-
             }
+
             return false;
         }
 

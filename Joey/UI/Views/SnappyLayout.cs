@@ -1,7 +1,6 @@
 ﻿using System;
 using Android.Animation;
 using Android.Content;
-using Android.Graphics;
 using Android.Runtime;
 using Android.Util;
 using Android.Views;
@@ -16,7 +15,7 @@ namespace Toggl.Joey.UI.Views
         private float scrollThreshold;
         private float touchY;
         private Animator scrollAnim;
-        private Rect scrollableArea;
+        private float dragYLimit;
 
         public SnappyLayout (Context ctx) : base (ctx)
         {
@@ -43,7 +42,6 @@ namespace Toggl.Joey.UI.Views
             var dm = Resources.DisplayMetrics;
 
             scrollThreshold = TypedValue.ApplyDimension (ComplexUnitType.Dip, 75, dm);
-            scrollableArea = new Rect ();
         }
 
         private void ForEachChild (Action<View> act)
@@ -71,14 +69,11 @@ namespace Toggl.Joey.UI.Views
             });
         }
 
-        public Rect ScrollableArea
+        public float DragYLimit
         {
-            get { return scrollableArea; }
+            get { return dragYLimit; }
             set {
-                if (value == scrollableArea) {
-                    return;
-                }
-                scrollableArea = value;
+                dragYLimit = value;
             }
         }
 
@@ -204,7 +199,8 @@ namespace Toggl.Joey.UI.Views
         public override bool OnInterceptTouchEvent (MotionEvent ev)
         {
             if (ev.Action == MotionEventActions.Move ) {
-                if ( ev.GetY() > scrollableArea.Top && ev.GetY() < scrollableArea.Bottom) {
+                var pos = ev.GetY () - translateY;
+                if (pos < dragYLimit) {
                     return true;
                 }
             }

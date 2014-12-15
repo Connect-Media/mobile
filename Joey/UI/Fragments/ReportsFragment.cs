@@ -4,8 +4,10 @@ using Android.Content;
 using Android.Graphics;
 using Android.Graphics.Drawables;
 using Android.OS;
+using Android.Util;
 using Android.Views;
 using Android.Widget;
+using Java.Interop;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
@@ -180,6 +182,18 @@ namespace Toggl.Joey.UI.Fragments
                 billableValue = view.FindViewById<TextView> (Resource.Id.BillableValue);
 
                 snappyLayout.ActiveChildChanged += OnSnappyActiveChildChanged;
+                snappyLayout.LayoutChange += (sender, e) => {
+                    if ( snappyLayout.DragYLimit.CompareTo (0) == 0) {
+                        var dm = new DisplayMetrics();
+                        IWindowManager windowManager = Context.GetSystemService (Context.WindowService).JavaCast<IWindowManager>();
+                        windowManager.DefaultDisplay.GetMetrics ( dm);
+                        int topOffset = dm.HeightPixels - view.MeasuredHeight;
+
+                        var location = new int[2];
+                        listView.GetLocationOnScreen ( location);
+                        snappyLayout.DragYLimit = location[1] - topOffset;
+                    }
+                };
 
                 pieChart.SliceClicked += OnSliceSelect;
 
@@ -187,12 +201,6 @@ namespace Toggl.Joey.UI.Fragments
                 listView.SetClipToPadding (false);
                 listView.ItemClick += OnListItemClick;
                 listView.SetOnHierarchyChangeListener (this);
-
-                snappyLayout.LayoutChange += (sender, e) => {
-                    if ( snappyLayout.ScrollableArea.Bottom == 0) {
-                        snappyLayout.ScrollableArea = DefineScrollableArea();
-                    }
-                };
             }
 
             protected override void Dispose (bool disposing)
@@ -251,9 +259,6 @@ namespace Toggl.Joey.UI.Fragments
                 if (SnapPositionChanged != null) {
                     SnapPositionChanged (this, EventArgs.Empty);
                 }
-
-                // change layout area according to snapped child
-                snappyLayout.ScrollableArea = DefineScrollableArea ();
             }
 
             private Rect DefineScrollableArea()
@@ -300,7 +305,6 @@ namespace Toggl.Joey.UI.Fragments
                 get { return snappyLayout.ActiveChild; }
                 set {
                     snappyLayout.ActiveChild = value;
-                    snappyLayout.ScrollableArea = DefineScrollableArea ();
                 }
             }
 
