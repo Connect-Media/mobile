@@ -6,11 +6,9 @@ using Android.Graphics.Drawables;
 using Android.OS;
 using Android.Views;
 using Android.Widget;
-using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Reports;
-using XPlatUtils;
 using Toggl.Joey.UI.Utils;
 using Toggl.Joey.UI.Views;
 using Fragment = Android.Support.V4.App.Fragment;
@@ -189,6 +187,12 @@ namespace Toggl.Joey.UI.Fragments
                 listView.SetClipToPadding (false);
                 listView.ItemClick += OnListItemClick;
                 listView.SetOnHierarchyChangeListener (this);
+
+                snappyLayout.LayoutChange += (sender, e) => {
+                    if ( snappyLayout.ScrollableArea.Bottom == 0) {
+                        snappyLayout.ScrollableArea = DefineScrollableArea();
+                    }
+                };
             }
 
             protected override void Dispose (bool disposing)
@@ -247,6 +251,19 @@ namespace Toggl.Joey.UI.Fragments
                 if (SnapPositionChanged != null) {
                     SnapPositionChanged (this, EventArgs.Empty);
                 }
+
+                // change layout area according to snapped child
+                snappyLayout.ScrollableArea = DefineScrollableArea ();
+            }
+
+            private Rect DefineScrollableArea()
+            {
+                if (snappyLayout.ActiveChild == 1) {
+                    return new Rect ( 0, 0, pieChart.Right, pieChart.MeasuredHeight );
+                }
+                var rect = new Rect ();
+                pieChart.GetGlobalVisibleRect (rect);
+                return rect;
             }
 
             public View ObtainProjectListItem()
@@ -281,7 +298,10 @@ namespace Toggl.Joey.UI.Fragments
             public int SnapPosition
             {
                 get { return snappyLayout.ActiveChild; }
-                set { snappyLayout.ActiveChild = value; }
+                set {
+                    snappyLayout.ActiveChild = value;
+                    snappyLayout.ScrollableArea = DefineScrollableArea ();
+                }
             }
 
             public event EventHandler SnapPositionChanged;

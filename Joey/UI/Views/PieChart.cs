@@ -218,7 +218,7 @@ namespace Toggl.Joey.UI.Views
             canvas.DrawText (duration, centerX, centerY + textBoundsRect.Height() / 2, canvasPaint);
         }
 
-        public override bool DispatchTouchEvent (MotionEvent e)
+        public override bool OnTouchEvent (MotionEvent e)
         {
             Point point = new Point ();
             point.X = (int)e.GetX ();
@@ -246,13 +246,17 @@ namespace Toggl.Joey.UI.Views
                     return true;
                 }
 
-                // deselect all
+                // or deselect all
                 if (indexSelected != -1) {
                     deselectedIndex = indexSelected;
                     indexSelected = -1;
                     return true;
                 }
 
+            }
+
+            if (e.Action == MotionEventActions.Move) {
+                return false;
             }
 
             if (e.Action == MotionEventActions.Up) {
