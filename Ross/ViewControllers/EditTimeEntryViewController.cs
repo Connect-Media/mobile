@@ -12,9 +12,9 @@ using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Data.Models;
 using Toggl.Phoebe.Data.Utils;
 using Toggl.Phoebe.Data.Views;
-using XPlatUtils;
 using Toggl.Ross.Theme;
 using Toggl.Ross.Views;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -380,7 +380,6 @@ namespace Toggl.Ross.ViewControllers
                 model.StopTime = datePicker.Date.ToDateTime ();
                 break;
             }
-
             model.SaveAsync ();
         }
 
@@ -583,7 +582,6 @@ namespace Toggl.Ross.ViewControllers
                 } else {
                     yield return v.Below (prev, 5f);
                 }
-                yield return v.Height ().EqualTo (60f).SetPriority (UILayoutPriority.DefaultLow);
                 yield return v.Height ().GreaterThanOrEqualTo (60f);
                 yield return v.AtLeftOf (container);
                 yield return v.AtRightOf (container);
@@ -889,6 +887,8 @@ namespace Toggl.Ross.ViewControllers
 
             public ProjectClientTaskButton ()
             {
+                projectColor = UIColor.Cyan;
+
                 Add (container = new UIView () {
                     TranslatesAutoresizingMaskIntoConstraints = false,
                     UserInteractionEnabled = false,
@@ -924,46 +924,47 @@ namespace Toggl.Ross.ViewControllers
 
             public override void UpdateConstraints ()
             {
-                RemoveConstraints (Constraints);
-
-                this.AddConstraints (
-                    container.AtLeftOf (this, 15f),
-                    container.WithSameCenterY (this),
-
-                    projectLabel.AtTopOf (container),
-                    projectLabel.AtLeftOf (container),
-                    null
-                );
-
-                if (!clientLabel.Hidden) {
-                    var baselineOffset = (float)Math.Floor (projectLabel.Font.Descender - clientLabel.Font.Descender);
+                //RemoveConstraints (Constraints);
+                if (Constraints.Length == 0) {
                     this.AddConstraints (
-                        clientLabel.AtTopOf (container, -baselineOffset),
-                        clientLabel.AtRightOf (container),
-                        clientLabel.ToRightOf (projectLabel, 5f),
-                        clientLabel.AtBottomOf (projectLabel, baselineOffset),
+                        container.AtLeftOf (this, 15f),
+                        container.WithSameCenterY (this),
+
+                        projectLabel.AtTopOf (container),
+                        projectLabel.AtLeftOf (container),
                         null
                     );
-                } else {
-                    this.AddConstraints (
-                        projectLabel.AtRightOf (container),
-                        null
-                    );
-                }
 
-                if (!taskLabel.Hidden) {
-                    this.AddConstraints (
-                        taskLabel.Below (projectLabel, 3f),
-                        taskLabel.AtLeftOf (container),
-                        taskLabel.AtRightOf (container),
-                        taskLabel.AtBottomOf (container),
-                        null
-                    );
-                } else {
-                    this.AddConstraints (
-                        projectLabel.AtBottomOf (container),
-                        null
-                    );
+                    if (!clientLabel.Hidden) {
+                        var baselineOffset = (float)Math.Floor (projectLabel.Font.Descender - clientLabel.Font.Descender);
+                        this.AddConstraints (
+                            clientLabel.AtTopOf (container, -baselineOffset),
+                            clientLabel.AtRightOf (container),
+                            clientLabel.ToRightOf (projectLabel, 5f),
+                            clientLabel.AtBottomOf (projectLabel, baselineOffset),
+                            null
+                        );
+                    } else {
+                        this.AddConstraints (
+                            projectLabel.AtRightOf (container),
+                            null
+                        );
+                    }
+
+                    if (!taskLabel.Hidden) {
+                        this.AddConstraints (
+                            taskLabel.Below (projectLabel, 3f),
+                            taskLabel.AtLeftOf (container),
+                            taskLabel.AtRightOf (container),
+                            taskLabel.AtBottomOf (container),
+                            null
+                        );
+                    } else {
+                        this.AddConstraints (
+                            projectLabel.AtBottomOf (container),
+                            null
+                        );
+                    }
                 }
 
                 base.UpdateConstraints ();
@@ -1021,16 +1022,25 @@ namespace Toggl.Ross.ViewControllers
                 }
             }
 
+            private UIColor projectColor;
+
             public UIColor ProjectColor
             {
                 set {
-                    if (value == Color.White) {
+
+                    if (projectColor.IsEqual (value)) {
+                        return;
+                    }
+
+                    projectColor = value;
+
+                    if (projectColor == Color.White) {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectHintLabel);
                         SetBackgroundImage (Color.White.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (Color.LightestGray.ToImage (), UIControlState.Highlighted);
                     } else {
                         projectLabel.Apply (Style.EditTimeEntry.ProjectLabel);
-                        SetBackgroundImage (value.ToImage (), UIControlState.Normal);
+                        SetBackgroundImage (projectColor.ToImage (), UIControlState.Normal);
                         SetBackgroundImage (null, UIControlState.Highlighted);
                     }
                 }
@@ -1040,6 +1050,13 @@ namespace Toggl.Ross.ViewControllers
             public static new bool RequiresConstraintBasedLayout ()
             {
                 return true;
+            }
+
+            public override SizeF IntrinsicContentSize
+            {
+                get {
+                    return new SizeF ( Bounds.Width, 60f);
+                }
             }
         }
     }

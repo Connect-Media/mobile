@@ -6,8 +6,8 @@ using MonoTouch.UIKit;
 using Toggl.Phoebe;
 using Toggl.Phoebe.Analytics;
 using Toggl.Phoebe.Net;
-using XPlatUtils;
 using Toggl.Ross.Theme;
+using XPlatUtils;
 
 namespace Toggl.Ross.ViewControllers
 {
@@ -28,6 +28,9 @@ namespace Toggl.Ross.ViewControllers
         private UIButton sendButton;
         private FeedbackMessage.Mood? userMood;
         private bool isSending;
+        private UIView wrapper;
+        private FluentLayout topFLayout;
+        private FluentLayout bottomFLayout;
 
         public FeedbackViewController ()
         {
@@ -44,100 +47,119 @@ namespace Toggl.Ross.ViewControllers
         public override void LoadView ()
         {
             View = new UIView ().Apply (Style.Screen);
+            wrapper = new UIView {
+                TranslatesAutoresizingMaskIntoConstraints = false,
+            };
 
-            Add (moodLabel = new UILabel () {
+            wrapper.Add (moodLabel = new UILabel () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
                 Text = "FeedbackMood".Tr (),
             } .Apply (Style.Feedback.MoodLabel));
 
-            Add (positiveMoodButton = new UIButton () {
+            wrapper.Add (positiveMoodButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.PositiveMoodButton));
             positiveMoodButton.TouchUpInside += OnMoodButtonTouchUpInside;
-            Add (neutralMoodButton = new UIButton () {
+            wrapper.Add (neutralMoodButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.NeutralMoodButton));
             neutralMoodButton.TouchUpInside += OnMoodButtonTouchUpInside;
-            Add (negativeMoodButton = new UIButton () {
+            wrapper.Add (negativeMoodButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.NegativeMoodButton));
             negativeMoodButton.TouchUpInside += OnMoodButtonTouchUpInside;
-            Add (positiveMoodSeparatorView = new UIView () {
+            wrapper.Add (positiveMoodSeparatorView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.MoodSeparator));
-            Add (negativeMoodSeparatorView = new UIView () {
+            wrapper.Add (negativeMoodSeparatorView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.MoodSeparator));
-            Add (messageTopBorderView = new UIView () {
+            wrapper.Add (messageTopBorderView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.MessageBorder));
-            Add (messageTextView = new UITextView () {
+            wrapper.Add (messageTextView = new UITextView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.MessageField));
             messageTextView.Changed += (s, e) => RebindSendButton ();
-            Add (messageBottomBorderView = new UIView () {
+            wrapper.Add (messageBottomBorderView = new UIView () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.MessageBorder));
-            Add (sendButton = new UIButton () {
+            wrapper.Add (sendButton = new UIButton () {
                 TranslatesAutoresizingMaskIntoConstraints = false,
             } .Apply (Style.Feedback.SendButton));
             sendButton.TouchUpInside += OnSendTouchUpInside;
 
+            View.Add (wrapper);
             RebindSendButton ();
             ResetConstraints ();
         }
 
         private void ResetConstraints ()
         {
-            View.RemoveConstraints (View.Constraints);
+            if (wrapper.Constraints.Length == 0) {
+                wrapper.AddConstraints (
+                    moodLabel.AtTopOf (wrapper),
+                    moodLabel.AtLeftOf (wrapper, 5f),
+                    moodLabel.AtRightOf (wrapper, 5f),
+                    moodLabel.Height ().EqualTo (40f),
+
+                    neutralMoodButton.Below (moodLabel, 5f),
+                    neutralMoodButton.WithSameCenterX (wrapper),
+
+                    positiveMoodSeparatorView.ToLeftOf (neutralMoodButton, 30f),
+                    positiveMoodSeparatorView.WithSameCenterY (neutralMoodButton),
+                    positiveMoodSeparatorView.Height ().EqualTo (15f),
+                    positiveMoodSeparatorView.Width ().EqualTo (1f),
+
+                    positiveMoodButton.ToLeftOf (positiveMoodSeparatorView, 30f),
+                    positiveMoodButton.WithSameCenterY (neutralMoodButton),
+
+                    negativeMoodSeparatorView.ToRightOf (neutralMoodButton, 30f),
+                    negativeMoodSeparatorView.WithSameCenterY (neutralMoodButton),
+                    negativeMoodSeparatorView.Height ().EqualTo (15f),
+                    negativeMoodSeparatorView.Width ().EqualTo (1f),
+
+                    negativeMoodButton.ToRightOf (negativeMoodSeparatorView, 30f),
+                    negativeMoodButton.WithSameCenterY (neutralMoodButton),
+
+                    messageTopBorderView.Below (neutralMoodButton, 15f),
+                    messageTopBorderView.AtLeftOf (wrapper),
+                    messageTopBorderView.AtRightOf (wrapper),
+                    messageTopBorderView.Height ().EqualTo (1f),
+
+                    messageTextView.Below (messageTopBorderView),
+                    messageTextView.AtLeftOf (wrapper),
+                    messageTextView.AtRightOf (wrapper),
+                    messageTextView.AtBottomOf (messageTextView),
+
+                    messageBottomBorderView.Below (messageTextView),
+                    messageBottomBorderView.AtLeftOf (wrapper),
+                    messageBottomBorderView.AtRightOf (wrapper),
+                    messageBottomBorderView.Height ().EqualTo (1f),
+
+                    sendButton.Below (messageBottomBorderView, 5f),
+                    sendButton.AtLeftOf (wrapper),
+                    sendButton.AtRightOf (wrapper),
+                    sendButton.AtBottomOf (wrapper),
+                    sendButton.Height ().EqualTo (60f),
+
+                    null
+                );
+            }
 
             var keyboardVisible = keyboardHeight >= 1f;
+            var topMargin = keyboardVisible ? 20f : 70f;
+            var bottomMargin = (keyboardVisible ? keyboardHeight : 0f) + 5f;
+
+            topFLayout = wrapper.AtTopOf (View).Plus (topMargin);
+            bottomFLayout = wrapper.WithSameHeight (View).Minus (bottomMargin + topMargin);
 
             View.AddConstraints (
-                moodLabel.AtTopOf (View, keyboardVisible ? 20f : 70f),
-                moodLabel.AtLeftOf (View, 5f),
-                moodLabel.AtRightOf (View, 5f),
-                moodLabel.Height ().EqualTo (40f),
-
-                neutralMoodButton.Below (moodLabel, 5f),
-                neutralMoodButton.WithSameCenterX (View),
-
-                positiveMoodSeparatorView.ToLeftOf (neutralMoodButton, 30f),
-                positiveMoodSeparatorView.WithSameCenterY (neutralMoodButton),
-                positiveMoodSeparatorView.Height ().EqualTo (15f),
-                positiveMoodSeparatorView.Width ().EqualTo (1f),
-
-                positiveMoodButton.ToLeftOf (positiveMoodSeparatorView, 30f),
-                positiveMoodButton.WithSameCenterY (neutralMoodButton),
-
-                negativeMoodSeparatorView.ToRightOf (neutralMoodButton, 30f),
-                negativeMoodSeparatorView.WithSameCenterY (neutralMoodButton),
-                negativeMoodSeparatorView.Height ().EqualTo (15f),
-                negativeMoodSeparatorView.Width ().EqualTo (1f),
-
-                negativeMoodButton.ToRightOf (negativeMoodSeparatorView, 30f),
-                negativeMoodButton.WithSameCenterY (neutralMoodButton),
-
-                messageTopBorderView.Below (neutralMoodButton, 15f),
-                messageTopBorderView.AtLeftOf (View),
-                messageTopBorderView.AtRightOf (View),
-                messageTopBorderView.Height ().EqualTo (1f),
-
-                messageTextView.Below (messageTopBorderView),
-                messageTextView.AtLeftOf (View),
-                messageTextView.AtRightOf (View),
-
-                messageBottomBorderView.Below (messageTextView),
-                messageBottomBorderView.AtLeftOf (View),
-                messageBottomBorderView.AtRightOf (View),
-                messageBottomBorderView.Height ().EqualTo (1f),
-
-                sendButton.Below (messageBottomBorderView, 5f),
-                sendButton.AtLeftOf (View),
-                sendButton.AtRightOf (View),
-                sendButton.AtBottomOf (View, (keyboardVisible ? keyboardHeight : 0f) + 5f),
-                sendButton.Height ().EqualTo (60f),
-
+                topFLayout,
+                wrapper.AtLeftOf (View),
+                wrapper.AtRightOf (View),
+                wrapper.WithSameWidth (View),
+                bottomFLayout,
                 null
             );
         }
@@ -169,7 +191,7 @@ namespace Toggl.Ross.ViewControllers
                 var frame = notif.UserInfo.ObjectForKey (UIKeyboard.FrameEndUserInfoKey) as NSValue;
 
                 if (frame != null) {
-                    OnKeyboardHeightChanged ((int)frame.CGRectValue.Height);
+                    OnKeyboardHeightChanged (frame.CGRectValue.Height);
                 }
             });
         }
@@ -195,8 +217,8 @@ namespace Toggl.Ross.ViewControllers
             keyboardHeight = height;
 
             UIView.Animate (keyboardDuration, () => {
-                ResetConstraints ();
-                View.LayoutIfNeeded ();
+                ResetConstraints();
+                View.LayoutIfNeeded();
             });
         }
 

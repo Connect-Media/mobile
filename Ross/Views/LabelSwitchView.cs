@@ -1,7 +1,7 @@
-﻿using System;
-using Cirrious.FluentLayouts.Touch;
+﻿using Cirrious.FluentLayouts.Touch;
 using MonoTouch.Foundation;
 using MonoTouch.UIKit;
+using System.Drawing;
 
 namespace Toggl.Ross.Views
 {
@@ -58,6 +58,13 @@ namespace Toggl.Ross.Views
         public static new bool RequiresConstraintBasedLayout ()
         {
             return true;
+        }
+
+        public override SizeF IntrinsicContentSize
+        {
+            get {
+                return new SizeF ( Bounds.Width, 60f);
+            }
         }
 
     }
