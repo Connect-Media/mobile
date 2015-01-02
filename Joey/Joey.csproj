@@ -71,6 +71,8 @@
     <Reference Include="GooglePlayServicesLib">
       <HintPath>..\packages\Xamarin.GooglePlayServices.19.0.0.1\lib\MonoAndroid23\GooglePlayServicesLib.dll</HintPath>
     </Reference>
+    <Reference Include="System.ComponentModel.Composition" />
+    <Reference Include="Mono.Android.Export" />
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Properties\AssemblyInfo.cs" />
